@@ -18,6 +18,7 @@ using EFT.Hideout;
 using Newtonsoft.Json;
 using SevenBoldPencil.Common;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -28,6 +29,9 @@ using UnityEngine;
 // walk around model, get all body part collider, and change go layer to HitCollider
 // also need to attach other colliders to prevent gun
 // maneq is missing some colliders (at least head colliders)
+//
+// TODO add body part health settings in F12 menu, head: 35, chest: 85, etc
+// TODO use BSG calculations, to support all weird bullets people use
 
 namespace SevenBoldPencil.TargetMannequins
 {
@@ -40,8 +44,38 @@ namespace SevenBoldPencil.TargetMannequins
 
 	public class MannequinPlayer
 	{
-		public float Health;
-		public Transform RotationPivot;
+		public readonly Transform RotationPivot;
+		public readonly Dictionary<EBodyPart, float> Health;
+		public bool IsAlive;
+
+		public MannequinPlayer(Transform rotationPivot)
+		{
+			RotationPivot = rotationPivot;
+			Health = new(7);
+			ResetHealth();
+		}
+
+		public void ResetHealth()
+		{
+			Health[EBodyPart.Head] = Plugin.Instance.Health_Head;
+			Health[EBodyPart.Chest] = Plugin.Instance.Health_Chest;
+			Health[EBodyPart.Stomach] = Plugin.Instance.Health_Stomach;
+			Health[EBodyPart.LeftArm] = Plugin.Instance.Health_Arm;
+			Health[EBodyPart.RightArm] = Plugin.Instance.Health_Arm;
+			Health[EBodyPart.LeftLeg] = Plugin.Instance.Health_Leg;
+			Health[EBodyPart.RightLeg] = Plugin.Instance.Health_Leg;
+			IsAlive = true;
+		}
+
+		public float GetTotalHealth()
+		{
+			var sum = 0f;
+			foreach (var bodyPartHealth in Health.Values)
+			{
+				sum += bodyPartHealth;
+			}
+			return sum;
+		}
 	}
 
     [BepInPlugin("7Bpencil.TargetMannequins", "7Bpencil.TargetMannequins", "1.0.0")]
@@ -72,6 +106,13 @@ namespace SevenBoldPencil.TargetMannequins
 
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
+
+		// TODO make it a setting
+		public float Health_Head = 35;
+		public float Health_Chest = 85;
+		public float Health_Stomach = 70;
+		public float Health_Arm = 60;
+		public float Health_Leg = 65;
 
         private void Awake()
         {
@@ -112,9 +153,7 @@ namespace SevenBoldPencil.TargetMannequins
 				rotationPivot.localPosition = mannequinData.LocalPosition;
 				rotationPivot.localEulerAngles = new(0, mannequinData.LocalEulerAnglesY, 0);
 
-				var player = new MannequinPlayer();
-				player.Health = 440;
-				player.RotationPivot = prefab.transform;
+				var player = new MannequinPlayer(prefab.transform);
 
 				var playerBones = playerBody.PlayerBones;
 				var colliders = playerBones.BodyPartColliders;
@@ -168,26 +207,49 @@ namespace SevenBoldPencil.TargetMannequins
 
 		public PlayerHitInfo ApplyShot(DamageInfo damageInfo, EBodyPart bodyPart, EBodyPartColliderType bodyPartCollider, EArmorPlateCollider armorPlateCollider, ShotId shotId)
 		{
-			Plugin.Instance.LoggerInstance.LogWarning("ApplyShot");
-			var shotDamage = 60;
-			if (MannequinPlayer.Health > 0)
+			// TODO finish damage spread and commit that implementing damage+armor system ourselves is a bad idea,
+			// just try to spawn bot, then make custom one
+			if (MannequinPlayer.IsAlive)
 			{
-				MannequinPlayer.Health = Math.Max(MannequinPlayer.Health - shotDamage, 0);
-				if (MannequinPlayer.Health == 0)
+				var health = MannequinPlayer.Health;
+
+				Plugin.Instance.LoggerInstance.LogWarning($"ApplyShot: part: {bodyPart}, health: {health[bodyPart]}, total: {MannequinPlayer.GetTotalHealth()}, damage: {damageInfo.Damage}");
+
+				if (health[bodyPart] > 0)
 				{
-					// TODO make animations more sexy
-					var sequence = DOTween.Sequence();
-					sequence.Append(MannequinPlayer.RotationPivot.DOLocalRotate(new(-90, 0, 0), 0.5f));
-					sequence.AppendInterval(3);
-					sequence.Append(MannequinPlayer.RotationPivot.DOLocalRotate(new(0, 0, 0), 0.5f));
-					sequence.AppendCallback(() =>
+					health[bodyPart] = Math.Max(health[bodyPart] - damageInfo.Damage, 0);
+					if (health[bodyPart] == 0)
 					{
-						MannequinPlayer.Health = 440;
-					});
+						if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
+						{
+							Kill();
+						}
+						// TODO spread damage over non destroyed body parts
+					}
+				}
+				else
+				{
+					// TODO spread damage over non destroyed body parts
 				}
 			}
 			return null;
 		}
+
+		private void Kill()
+		{
+			MannequinPlayer.IsAlive = false;
+
+			// TODO make animations more sexy
+			var sequence = DOTween.Sequence();
+			sequence.Append(MannequinPlayer.RotationPivot.DOLocalRotate(new(-90, 0, 0), 0.5f));
+			sequence.AppendInterval(3);
+			sequence.Append(MannequinPlayer.RotationPivot.DOLocalRotate(new(0, 0, 0), 0.5f));
+			sequence.AppendCallback(() =>
+			{
+				MannequinPlayer.ResetHealth();
+			});
+		}
+
 
 		public void ApplyDamageInfo(DamageInfo damageInfo, EBodyPart bodyPartType, EBodyPartColliderType bodyPartCollider, float absorbed)
 		{
