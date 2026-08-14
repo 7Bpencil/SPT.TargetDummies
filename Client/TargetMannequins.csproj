@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="Shared.props" />
+
+  <PropertyGroup>
+    <AssemblyName>7Bpencil.TargetMannequins</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony" />
+    <Reference Include="spt-reflection" />
+    <Reference Include="Assembly-CSharp" />
+    <Reference Include="BepInEx" />
+    <Reference Include="Comfort" />
+    <Reference Include="DOTween" />
+    <Reference Include="Newtonsoft.Json" />
+    <Reference Include="Sirenix.Serialization" />
+    <Reference Include="UnityEngine" />
+    <Reference Include="UnityEngine.AssetBundleModule" />
+    <Reference Include="UnityEngine.CoreModule" />
+    <Reference Include="UnityEngine.ImageConversionModule" />
+    <Reference Include="UnityEngine.PhysicsModule" />
+  </ItemGroup>
+
+</Project>
