@@ -251,9 +251,6 @@ namespace SevenBoldPencil.TargetMannequins
 		public void OnBotDeath(LocalPlayer bot)
 		{
 			StartCoroutine(DespawnBotSpawnAnotherOne(bot));
-			// var corpse = bot.GetField<LocalPlayer, Corpse>("Corpse");
-			// __instance._playerBody = null;
-			// corpse.Kill();
 		}
 
 		public IEnumerator DespawnBotSpawnAnotherOne(LocalPlayer bot)
@@ -266,6 +263,7 @@ namespace SevenBoldPencil.TargetMannequins
 			yield return new WaitForSeconds(1f);
 
 			bot.Dispose();
+			AssetPoolObject.ReturnToPool(bot.gameObject, true);
 
 			yield return new WaitForSeconds(1f);
 
