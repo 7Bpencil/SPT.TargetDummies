@@ -32,11 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-// TODO spawn bots when player enters shooting range,
-// so let it clean bodies automatically
-// TODO on demostration video shoot bots with different guns,
-// use mod to bind weapons from backpack (use items anywhere)
-// TODO rotate bots to face player on spawn
+// TODO despawn all of them on hideout exit
+// TODO test all timings
 
 namespace SevenBoldPencil.TargetMannequins
 {
@@ -45,11 +42,22 @@ namespace SevenBoldPencil.TargetMannequins
 	public enum MannequinType
 	{
 		Scav,
+		Reshala,
+		Killa,
+		Sanitar,
+		Gluhar,
 		Partisan,
+		Rogue,
 		Knight,
 		BigPipe,
 		BirdEye,
 	}
+
+	public readonly record struct MannequinData
+	(
+		Vector3 Position,
+		ConfigEntry<MannequinType> Type
+	);
 
 	// TODO rename to TargetDummies
     [BepInPlugin("7Bpencil.TargetMannequins", "7Bpencil.TargetMannequins", "0.1.0")]
@@ -62,6 +70,8 @@ namespace SevenBoldPencil.TargetMannequins
 		public ConfigEntry<MannequinType> CenterMannequinType;
 		public ConfigEntry<MannequinType> RightMannequinType;
 
+		public Dictionary<LocalPlayer, MannequinData> Mannequins;
+
         private void Awake()
         {
             Instance = this;
@@ -71,34 +81,14 @@ namespace SevenBoldPencil.TargetMannequins
 			CenterMannequinType = Config.Bind<MannequinType>("Main", "Center Mannequin Type", MannequinType.Scav);
 			RightMannequinType = Config.Bind<MannequinType>("Main", "Right Mannequin Type", MannequinType.Scav);
 
+			Mannequins = new();
+
 			new Patch_HideoutController_HideoutAwake().Enable();
 			new Patch_GameWorld_DestroyAllLoot().Enable();
+			new Patch_CorpseRagdoll_Start().Enable();
         }
 
-		public void Update()
-		{
-			if (Input.GetKeyDown(KeyCode.F3))
-			{
-				var closeLeftPosition = new Vector3(-4f, 0.01f, 16.2f);
-				var closeCenterPosition = new Vector3(-2.9f, 0.01f, 23.75f);
-				var closeRightPosition = new Vector3(-1.65f, 0.01f, 30.22f);
-
-				var farLeftPosition = new Vector3(-4.95f, 0.01f, 57.48f);
-				var farCenterPosition = new Vector3(-2.75f, 0.01f, 57.47f);
-				var farRightPosition = new Vector3(-0.56f, 0.01f, 57.47f);
-
-				SpawnBot(closeLeftPosition, LeftMannequinType.Value);
-				SpawnBot(closeCenterPosition, CenterMannequinType.Value);
-				SpawnBot(closeRightPosition, RightMannequinType.Value);
-
-				// TODO should far row targets have different bot types?
-				SpawnBot(farLeftPosition, LeftMannequinType.Value);
-				SpawnBot(farCenterPosition, CenterMannequinType.Value);
-				SpawnBot(farRightPosition, RightMannequinType.Value);
-			}
-		}
-
-		public async Task SpawnBot(Vector3 position, MannequinType mannequinType)
+		public async Task SpawnBot(MannequinData data)
 		{
 			try
 			{
@@ -117,7 +107,7 @@ namespace SevenBoldPencil.TargetMannequins
 			var session = tarkovApplication.Session;
 			var profilesRequest = new List<CountTypeBotWave>()
 			{
-				GetBotType(mannequinType)
+				GetBotType(data.Type.Value)
 			};
 			var profiles = await session.LoadBots(profilesRequest);
 			var botPlayerProfile = profiles[0];
@@ -133,13 +123,13 @@ namespace SevenBoldPencil.TargetMannequins
 			);
 
 			var botPlayerId = hideoutGame.NextPlayerId();
-			var rotation = Quaternion.LookRotation((localPlayerPosition - position).normalized);
+			var rotation = Quaternion.LookRotation((localPlayerPosition - data.Position).normalized);
 
 			var botPlayer = await LocalPlayer.Create
 			(
 				gameWorld: hideoutGameWorld,
 				playerId: botPlayerId,
-				position: position,
+				position: data.Position,
 				rotation: rotation,
 				layerName: "Player",
 				prefix: "",
@@ -164,11 +154,14 @@ namespace SevenBoldPencil.TargetMannequins
 			// I guess culling component thinks that they are not in camera view because
 			// something is not initalized properly, so for now just force rendering on
 
+			// TODO have to manually update player culling toggle
 			var playerCulling = botPlayer.GetField<LocalPlayer, OfflinePlayerCulling>("botPlayerCulling");
 			playerCulling.SetMode(BasePlayerCulling.EMode.Visible);
 
 			// take weapon in hands
 			botPlayer.SetSlotItem(EquipmentSlot.FirstPrimaryWeapon, (_) => {});
+
+			Mannequins[botPlayer] = data;
 
 			}
 			catch (Exception e)
@@ -183,7 +176,12 @@ namespace SevenBoldPencil.TargetMannequins
 			return mannequinType switch
 			{
 				MannequinType.Scav => new(1, WildSpawnType.assault, BotDifficulty.normal),
+				MannequinType.Reshala => new(1, WildSpawnType.bossBully, BotDifficulty.normal),
+				MannequinType.Killa => new(1, WildSpawnType.bossKilla, BotDifficulty.normal),
+				MannequinType.Gluhar => new(1, WildSpawnType.bossGluhar, BotDifficulty.normal),
+				MannequinType.Sanitar => new(1, WildSpawnType.bossSanitar, BotDifficulty.normal),
 				MannequinType.Partisan => new(1, WildSpawnType.bossPartisan, BotDifficulty.normal),
+				MannequinType.Rogue => new(1, WildSpawnType.exUsec, BotDifficulty.normal),
 				MannequinType.Knight => new(1, WildSpawnType.bossKnight, BotDifficulty.normal),
 				MannequinType.BigPipe => new(1, WildSpawnType.followerBigPipe, BotDifficulty.normal),
 				MannequinType.BirdEye => new(1, WildSpawnType.followerBirdEye, BotDifficulty.normal),
@@ -217,6 +215,7 @@ namespace SevenBoldPencil.TargetMannequins
 			}
 
 			StartCoroutine(FindAndDisableTargets(areaLevel.HighlightTransform));
+			StartCoroutine(SpawnInitialBots());
 		}
 
 		public IEnumerator FindAndDisableTargets(Transform targetsRoot)
@@ -230,6 +229,47 @@ namespace SevenBoldPencil.TargetMannequins
 					yield return null;
 				}
 			}
+		}
+
+		public IEnumerator SpawnInitialBots()
+		{
+			yield return new WaitForSeconds(1f);
+
+			var closeLeft = new MannequinData(new(-4f, 0.01f, 16.2f), LeftMannequinType);
+			var closeCenter = new MannequinData(new(-2.9f, 0.01f, 23.75f), CenterMannequinType);
+			var closeRight = new MannequinData(new(-1.65f, 0.01f, 30.22f), RightMannequinType);
+
+			// var farLeftPosition = new Vector3(-4.95f, 0.01f, 57.48f);
+			// var farCenterPosition = new Vector3(-2.75f, 0.01f, 57.47f);
+			// var farRightPosition = new Vector3(-0.56f, 0.01f, 57.47f);
+
+			SpawnBot(closeLeft);
+			SpawnBot(closeCenter);
+			SpawnBot(closeRight);
+		}
+
+		public void OnBotDeath(LocalPlayer bot)
+		{
+			StartCoroutine(DespawnBotSpawnAnotherOne(bot));
+			// var corpse = bot.GetField<LocalPlayer, Corpse>("Corpse");
+			// __instance._playerBody = null;
+			// corpse.Kill();
+		}
+
+		public IEnumerator DespawnBotSpawnAnotherOne(LocalPlayer bot)
+		{
+			if (!Mannequins.Remove(bot, out var mannequinData))
+			{
+				yield break;
+			}
+
+			yield return new WaitForSeconds(1f);
+
+			bot.Dispose();
+
+			yield return new WaitForSeconds(1f);
+
+			SpawnBot(mannequinData);
 		}
     }
 

@@ -5,12 +5,17 @@
 // LICENSE file in the root directory of this source tree.
 //
 
+using Comfort.Common;
 using DG.Tweening;
+using Diz.Binding;
+using Diz.Resources;
+using Diz.Skinning;
 using EFT;
 using EFT.Ballistics;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using EFT.Hideout;
+using EFT.Visual;
 using SevenBoldPencil.Common;
 using System;
 using System.Linq;
@@ -66,4 +71,31 @@ namespace SevenBoldPencil.TargetMannequins
 			return false;
 		}
 	}
+
+	public class Patch_CorpseRagdoll_Start : ModulePatch
+	{
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(CorpseRagdoll), nameof(CorpseRagdoll.Start));
+        }
+
+        [PatchPrefix]
+        public static void Prefix(CorpseRagdoll __instance)
+		{
+			var gameWorld = Singleton<GameWorld>.Instance;
+			if (gameWorld is not HideoutGameWorld)
+			{
+				return;
+			}
+
+			__instance._onRigidbodyStopped += () =>
+			{
+				if (__instance._owner.TryGetComponent<LocalPlayer>(out var localPlayer))
+				{
+					Plugin.Instance.OnBotDeath(localPlayer);
+				}
+			};
+		}
+	}
+
 }
