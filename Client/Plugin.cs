@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using HarmonyLib;
 using SevenBoldPencil.Common;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -31,9 +32,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
+// TODO spawn bots when player enters shooting range,
+// so let it clean bodies automatically
+// TODO on demostration video shoot bots with different guns,
+// use mod to bind weapons from backpack (use items anywhere)
+// TODO rotate bots to face player on spawn
+
 namespace SevenBoldPencil.TargetMannequins
 {
 	// TODO add all of them
+	// TODO mannequin with player equipment can be just "Mannequin" type
 	public enum MannequinType
 	{
 		Scav,
@@ -43,31 +51,53 @@ namespace SevenBoldPencil.TargetMannequins
 		BirdEye,
 	}
 
+	// TODO rename to TargetDummies
     [BepInPlugin("7Bpencil.TargetMannequins", "7Bpencil.TargetMannequins", "0.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
 
-		public static ConfigEntry<MannequinType> CenterMannequinType;
+		public ConfigEntry<MannequinType> LeftMannequinType;
+		public ConfigEntry<MannequinType> CenterMannequinType;
+		public ConfigEntry<MannequinType> RightMannequinType;
 
         private void Awake()
         {
             Instance = this;
 			LoggerInstance = Logger;
 
-			CenterMannequinType = Config.Bind<MannequinType>("Main", "Mannequin Type", MannequinType.Scav);
+			LeftMannequinType = Config.Bind<MannequinType>("Main", "Left Mannequin Type", MannequinType.Scav);
+			CenterMannequinType = Config.Bind<MannequinType>("Main", "Center Mannequin Type", MannequinType.Scav);
+			RightMannequinType = Config.Bind<MannequinType>("Main", "Right Mannequin Type", MannequinType.Scav);
+
+			new Patch_HideoutController_HideoutAwake().Enable();
         }
 
 		public void Update()
 		{
 			if (Input.GetKeyDown(KeyCode.F3))
 			{
-				SpawnBot();
+				var closeLeftPosition = new Vector3(-4f, 0.01f, 16.2f);
+				var closeCenterPosition = new Vector3(-2.9f, 0.01f, 23.75f);
+				var closeRightPosition = new Vector3(-1.65f, 0.01f, 30.22f);
+
+				var farLeftPosition = new Vector3(-4.95f, 0.01f, 57.48f);
+				var farCenterPosition = new Vector3(-2.75f, 0.01f, 57.47f);
+				var farRightPosition = new Vector3(-0.56f, 0.01f, 57.47f);
+
+				SpawnBot(closeLeftPosition, LeftMannequinType.Value);
+				SpawnBot(closeCenterPosition, CenterMannequinType.Value);
+				SpawnBot(closeRightPosition, RightMannequinType.Value);
+
+				// TODO should far row targets have different bot types?
+				SpawnBot(farLeftPosition, LeftMannequinType.Value);
+				SpawnBot(farCenterPosition, CenterMannequinType.Value);
+				SpawnBot(farRightPosition, RightMannequinType.Value);
 			}
 		}
 
-		public async Task SpawnBot()
+		public async Task SpawnBot(Vector3 position, MannequinType mannequinType)
 		{
 			try
 			{
@@ -84,7 +114,7 @@ namespace SevenBoldPencil.TargetMannequins
 			var session = tarkovApplication.Session;
 			var profilesRequest = new List<CountTypeBotWave>()
 			{
-				GetBotType(CenterMannequinType.Value)
+				GetBotType(mannequinType)
 			};
 			var profiles = await session.LoadBots(profilesRequest);
 			var botPlayerProfile = profiles[0];
@@ -100,7 +130,6 @@ namespace SevenBoldPencil.TargetMannequins
 			);
 
 			var botPlayerId = hideoutGame.NextPlayerId();
-			var position = new Vector3(-3f, 0.01f, 19);
 			var rotation = Quaternion.Euler(0, 180, 0);
 
 			var botPlayer = await LocalPlayer.Create
@@ -157,6 +186,47 @@ namespace SevenBoldPencil.TargetMannequins
 				MannequinType.BirdEye => new(1, WildSpawnType.followerBirdEye, BotDifficulty.normal),
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
+		}
+
+		// TODO this is true for level 3, what about other levels?
+		public static string[] ShootingRangeTargets =
+		[
+			"Rail_targets/01_rail_target/Shooting_range_rails_02/Shooting_range_target_rails",
+			"Rail_targets/02_rail_target/Shooting_range_rails_02 (1)/Shooting_range_target_rails",
+			"Rail_targets/03_rail_target/Shooting_range_rails_02 (2)/Shooting_range_target_rails",
+			"Popper_targets",
+			"Target_stand_changed (1)",
+			"Target_stand_changed (2)",
+			"Target_stand_changed (3)",
+		];
+
+		public void HideShootingRangeTargets(HideoutController __instance)
+		{
+			if (!__instance.Areas.TryGetValue(EAreaType.ShootingRange, out var shootingRange))
+			{
+				return;
+			}
+
+			var areaLevel = shootingRange.CurrentLevel;
+			if (!areaLevel)
+			{
+				return;
+			}
+
+			StartCoroutine(FindAndDisableTargets(areaLevel.HighlightTransform));
+		}
+
+		public IEnumerator FindAndDisableTargets(Transform targetsRoot)
+		{
+			foreach (var targetPath in ShootingRangeTargets)
+			{
+				var targetTransform = targetsRoot.Find(targetPath);
+				if (targetTransform)
+				{
+					targetTransform.gameObject.SetActive(false);
+					yield return null;
+				}
+			}
 		}
     }
 

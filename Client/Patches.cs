@@ -24,5 +24,17 @@ using UnityEngine.SceneManagement;
 
 namespace SevenBoldPencil.TargetMannequins
 {
+	public class Patch_HideoutController_HideoutAwake : ModulePatch
+	{
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(HideoutController), nameof(HideoutController.HideoutAwake));
+        }
 
+        [PatchPostfix]
+        public static void Postfix(HideoutController __instance)
+		{
+			Plugin.Instance.HideShootingRangeTargets(__instance);
+		}
+	}
 }
