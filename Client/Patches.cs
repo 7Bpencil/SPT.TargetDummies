@@ -13,6 +13,7 @@ using EFT.InventoryLogic;
 using EFT.Hideout;
 using SevenBoldPencil.Common;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -35,6 +36,34 @@ namespace SevenBoldPencil.TargetMannequins
         public static void Postfix(HideoutController __instance)
 		{
 			Plugin.Instance.HideShootingRangeTargets(__instance);
+		}
+	}
+
+	public class Patch_GameWorld_DestroyAllLoot : ModulePatch
+	{
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(GameWorld), nameof(GameWorld.DestroyAllLoot));
+        }
+
+        [PatchPrefix]
+        public static bool Prefix(GameWorld __instance)
+		{
+			if (__instance is not HideoutGameWorld)
+			{
+				return true;
+			}
+
+			// quitting shooting range destroys all loot and corpses are considered loot too
+			foreach (var lootItem in __instance.LootList.OfType<LootItem>().ToArray<LootItem>())
+			{
+				if (lootItem is not Corpse)
+				{
+					__instance.DestroyLoot(lootItem);
+				}
+			}
+
+			return false;
 		}
 	}
 }

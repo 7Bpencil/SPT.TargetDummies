@@ -72,6 +72,7 @@ namespace SevenBoldPencil.TargetMannequins
 			RightMannequinType = Config.Bind<MannequinType>("Main", "Right Mannequin Type", MannequinType.Scav);
 
 			new Patch_HideoutController_HideoutAwake().Enable();
+			new Patch_GameWorld_DestroyAllLoot().Enable();
         }
 
 		public void Update()
