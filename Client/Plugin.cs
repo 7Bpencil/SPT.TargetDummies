@@ -110,6 +110,8 @@ namespace SevenBoldPencil.TargetMannequins
 			var hideoutController = tarkovApplication.HideoutControllerAccess;
 			var hideoutGame = hideoutController.task_0.Result.Value;
 			var hideoutGameWorld = hideoutGame.GameWorld;
+			var localPlayer = hideoutGame.LocalPlayer;
+			var localPlayerPosition = localPlayer.Transform.position;
 
 			var session = tarkovApplication.Session;
 			var profilesRequest = new List<CountTypeBotWave>()
@@ -130,7 +132,7 @@ namespace SevenBoldPencil.TargetMannequins
 			);
 
 			var botPlayerId = hideoutGame.NextPlayerId();
-			var rotation = Quaternion.Euler(0, 180, 0);
+			var rotation = Quaternion.LookRotation((localPlayerPosition - position).normalized);
 
 			var botPlayer = await LocalPlayer.Create
 			(
