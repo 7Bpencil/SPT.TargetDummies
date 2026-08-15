@@ -31,28 +31,32 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-// TargetMannequins
-//
-// EAreaType.EquipmentPresetsStand
-// walk around model, get all body part collider, and change go layer to HitCollider
-// also need to attach other colliders to prevent gun
-// maneq is missing some colliders (at least head colliders)
-//
-// TODO add body part health settings in F12 menu, head: 35, chest: 85, etc
-// TODO use BSG calculations, to support all weird bullets people use
-
 namespace SevenBoldPencil.TargetMannequins
 {
+	// TODO add all of them
+	public enum MannequinType
+	{
+		Scav,
+		Partisan,
+		Knight,
+		BigPipe,
+		BirdEye,
+	}
+
     [BepInPlugin("7Bpencil.TargetMannequins", "7Bpencil.TargetMannequins", "0.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
 
+		public static ConfigEntry<MannequinType> CenterMannequinType;
+
         private void Awake()
         {
             Instance = this;
 			LoggerInstance = Logger;
+
+			CenterMannequinType = Config.Bind<MannequinType>("Main", "Mannequin Type", MannequinType.Scav);
         }
 
 		public void Update()
@@ -80,7 +84,7 @@ namespace SevenBoldPencil.TargetMannequins
 			var session = tarkovApplication.Session;
 			var profilesRequest = new List<CountTypeBotWave>()
 			{
-				new(1, WildSpawnType.bossZryachiy, BotDifficulty.normal),
+				GetBotType(CenterMannequinType.Value)
 			};
 			var profiles = await session.LoadBots(profilesRequest);
 			var botPlayerProfile = profiles[0];
@@ -139,6 +143,20 @@ namespace SevenBoldPencil.TargetMannequins
 			{
 				Logger.LogError(e);
 			}
+		}
+
+		public static CountTypeBotWave GetBotType(MannequinType mannequinType)
+		{
+			// TODO figure out correct bot difficulty
+			return mannequinType switch
+			{
+				MannequinType.Scav => new(1, WildSpawnType.assault, BotDifficulty.normal),
+				MannequinType.Partisan => new(1, WildSpawnType.bossPartisan, BotDifficulty.normal),
+				MannequinType.Knight => new(1, WildSpawnType.bossKnight, BotDifficulty.normal),
+				MannequinType.BigPipe => new(1, WildSpawnType.followerBigPipe, BotDifficulty.normal),
+				MannequinType.BirdEye => new(1, WildSpawnType.followerBirdEye, BotDifficulty.normal),
+				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
+			};
 		}
     }
 
