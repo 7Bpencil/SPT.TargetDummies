@@ -12,6 +12,7 @@ using Comfort.Common;
 using Diz.Jobs;
 using DG.Tweening;
 using EFT;
+using EFT.AssetsManager;
 using EFT.Animations;
 using EFT.Ballistics;
 using EFT.Development;
@@ -66,9 +67,13 @@ namespace SevenBoldPencil.TargetMannequins
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
 
-		public ConfigEntry<MannequinType> LeftMannequinType;
-		public ConfigEntry<MannequinType> CenterMannequinType;
-		public ConfigEntry<MannequinType> RightMannequinType;
+		public ConfigEntry<MannequinType> CloseLeftMannequinType;
+		public ConfigEntry<MannequinType> CloseMiddleMannequinType;
+		public ConfigEntry<MannequinType> CloseRightMannequinType;
+
+		public ConfigEntry<MannequinType> FarLeftMannequinType;
+		public ConfigEntry<MannequinType> FarMiddleMannequinType;
+		public ConfigEntry<MannequinType> FarRightMannequinType;
 
 		public Dictionary<LocalPlayer, MannequinData> Mannequins;
 
@@ -77,9 +82,13 @@ namespace SevenBoldPencil.TargetMannequins
             Instance = this;
 			LoggerInstance = Logger;
 
-			LeftMannequinType = Config.Bind<MannequinType>("Main", "Left Mannequin Type", MannequinType.Scav);
-			CenterMannequinType = Config.Bind<MannequinType>("Main", "Center Mannequin Type", MannequinType.Scav);
-			RightMannequinType = Config.Bind<MannequinType>("Main", "Right Mannequin Type", MannequinType.Scav);
+			CloseLeftMannequinType = Config.Bind<MannequinType>("Close", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
+			CloseMiddleMannequinType = Config.Bind<MannequinType>("Close", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
+			CloseRightMannequinType = Config.Bind<MannequinType>("Close", "Right Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
+
+			FarLeftMannequinType = Config.Bind<MannequinType>("Far", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
+			FarMiddleMannequinType = Config.Bind<MannequinType>("Far", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
+			FarRightMannequinType = Config.Bind<MannequinType>("Far", "Right Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
 
 			Mannequins = new();
 
@@ -235,17 +244,21 @@ namespace SevenBoldPencil.TargetMannequins
 		{
 			yield return new WaitForSeconds(1f);
 
-			var closeLeft = new MannequinData(new(-4f, 0.01f, 16.2f), LeftMannequinType);
-			var closeCenter = new MannequinData(new(-2.9f, 0.01f, 23.75f), CenterMannequinType);
-			var closeRight = new MannequinData(new(-1.65f, 0.01f, 30.22f), RightMannequinType);
+			var closeLeft = new MannequinData(new(-4f, 0.01f, 16.2f), CloseLeftMannequinType);
+			var closeMiddle = new MannequinData(new(-2.9f, 0.01f, 23.75f), CloseMiddleMannequinType);
+			var closeRight = new MannequinData(new(-1.65f, 0.01f, 30.22f), CloseRightMannequinType);
 
-			// var farLeftPosition = new Vector3(-4.95f, 0.01f, 57.48f);
-			// var farCenterPosition = new Vector3(-2.75f, 0.01f, 57.47f);
-			// var farRightPosition = new Vector3(-0.56f, 0.01f, 57.47f);
+			var farLeft = new MannequinData(new(-4.95f, 0.01f, 57.48f), FarLeftMannequinType);
+			var farMiddle = new MannequinData(new(-2.75f, 0.01f, 57.47f), FarMiddleMannequinType);
+			var farRight = new MannequinData(new(-0.56f, 0.01f, 57.47f), FarRightMannequinType);
 
 			SpawnBot(closeLeft);
-			SpawnBot(closeCenter);
+			SpawnBot(closeMiddle);
 			SpawnBot(closeRight);
+
+			SpawnBot(farLeft);
+			SpawnBot(farMiddle);
+			SpawnBot(farRight);
 		}
 
 		public void OnBotDeath(LocalPlayer bot)
