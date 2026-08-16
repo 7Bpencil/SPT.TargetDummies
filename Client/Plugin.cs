@@ -352,12 +352,12 @@ namespace SevenBoldPencil.TargetDummies
 				yield break;
 			}
 
-			yield return new WaitForSeconds(1f);
+			yield return new WaitForSeconds(0.5f);
 
 			bot.Dispose();
 			AssetPoolObject.ReturnToPool(bot.gameObject, true);
 
-			yield return new WaitForSeconds(1f);
+			yield return new WaitForSeconds(0.5f);
 
 			SpawnBot(mannequinData);
 		}
