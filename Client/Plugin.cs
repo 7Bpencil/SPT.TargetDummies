@@ -33,7 +33,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-// TODO despawn all of them on hideout exit
 // TODO test all timings
 
 namespace SevenBoldPencil.TargetDummies
@@ -60,7 +59,6 @@ namespace SevenBoldPencil.TargetDummies
 		ConfigEntry<MannequinType> Type
 	);
 
-	// TODO rename to TargetDummies
     [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.1.0")]
     public class Plugin : BaseUnityPlugin
     {
@@ -163,7 +161,7 @@ namespace SevenBoldPencil.TargetDummies
 			// I guess culling component thinks that they are not in camera view because
 			// something is not initalized properly, so for now just force rendering on
 
-			// TODO have to manually update player culling toggle
+			// TODO have to manually update player culling toggle?
 			var playerCulling = botPlayer.GetField<LocalPlayer, OfflinePlayerCulling>("botPlayerCulling");
 			playerCulling.SetMode(BasePlayerCulling.EMode.Visible);
 
