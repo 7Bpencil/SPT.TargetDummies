@@ -95,6 +95,7 @@ namespace SevenBoldPencil.TargetMannequins
 			new Patch_HideoutController_HideoutAwake().Enable();
 			new Patch_GameWorld_DestroyAllLoot().Enable();
 			new Patch_CorpseRagdoll_Start().Enable();
+			new Patch_HideoutAreaTrigger_OnTriggerExit().Enable();
         }
 
 		public async Task SpawnBot(MannequinData data)
@@ -110,7 +111,6 @@ namespace SevenBoldPencil.TargetMannequins
 			var hideoutController = tarkovApplication.HideoutControllerAccess;
 			var hideoutGame = hideoutController.task_0.Result.Value;
 			var hideoutGameWorld = hideoutGame.GameWorld;
-			var localPlayer = hideoutGame.LocalPlayer;
 			var localPlayerPosition = new Vector3(-2.5263f, 0f, 9.3481f);
 
 			var session = tarkovApplication.Session;

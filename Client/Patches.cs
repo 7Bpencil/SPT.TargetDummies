@@ -98,4 +98,36 @@ namespace SevenBoldPencil.TargetMannequins
 		}
 	}
 
+	// BSG doesnt check which collider exited shooting range, which means respawning
+	// bots force player to exit shooting range, so add check if collider actually belongs to player
+	public class Patch_HideoutAreaTrigger_OnTriggerExit : ModulePatch
+	{
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(HideoutAreaTrigger), nameof(HideoutAreaTrigger.OnTriggerExit));
+        }
+
+        [PatchPrefix]
+        public static bool Prefix(HideoutArea ____area, Collider col)
+		{
+			if (____area == null)
+			{
+				return false;
+			}
+
+			var gameWorld = Singleton<GameWorld>.Instance;
+			var colliderOwner = gameWorld.GetPlayerByCollider(col);
+			if (colliderOwner == null)
+			{
+				return false;
+			}
+			if (colliderOwner != gameWorld.MainPlayer)
+			{
+				return false;
+			}
+
+			____area.Data.Template.AreaBehaviour.OnExitLocation();
+			return false;
+		}
+	}
 }
