@@ -3,7 +3,7 @@
   <Import Project="Shared.props" />
 
   <PropertyGroup>
-    <AssemblyName>7Bpencil.TargetMannequins</AssemblyName>
+    <AssemblyName>7Bpencil.TargetDummies</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -11,8 +11,8 @@
     <LangVersion>latest</LangVersion>
     <Deterministic>true</Deterministic>
     <SPTPath>..\..\..\Escape from Tarkov</SPTPath>
-    <OutPath>$(SPTPath)\BepInEx\plugins\7Bpencil.TargetMannequins</OutPath>
-    <StagePath>$(ProjectDir)..\Stage\BepInEx\plugins\7Bpencil.TargetMannequins</StagePath>
+    <OutPath>$(SPTPath)\BepInEx\plugins\7Bpencil.TargetDummies</OutPath>
+    <StagePath>$(ProjectDir)..\Stage\BepInEx\plugins\7Bpencil.TargetDummies</StagePath>
     <AssemblySearchPaths>
       $(AssemblySearchPaths);
       $(SPTPath)\EscapeFromTarkov_Data\Managed;

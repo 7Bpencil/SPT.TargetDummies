@@ -36,7 +36,7 @@ using UnityEngine;
 // TODO despawn all of them on hideout exit
 // TODO test all timings
 
-namespace SevenBoldPencil.TargetMannequins
+namespace SevenBoldPencil.TargetDummies
 {
 	// TODO add all of them
 	// TODO mannequin with player equipment can be just "Mannequin" type
@@ -61,7 +61,7 @@ namespace SevenBoldPencil.TargetMannequins
 	);
 
 	// TODO rename to TargetDummies
-    [BepInPlugin("7Bpencil.TargetMannequins", "7Bpencil.TargetMannequins", "0.1.0")]
+    [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance;

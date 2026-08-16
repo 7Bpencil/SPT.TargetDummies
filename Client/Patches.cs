@@ -28,7 +28,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SevenBoldPencil.TargetMannequins
+namespace SevenBoldPencil.TargetDummies
 {
 	public class Patch_HideoutController_HideoutAwake : ModulePatch
 	{
