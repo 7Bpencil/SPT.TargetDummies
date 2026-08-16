@@ -277,7 +277,6 @@ namespace SevenBoldPencil.TargetDummies
 			return new(1, wildSpawnType, BotDifficulty.normal);
 		}
 
-		// TODO this is true for level 3, what about other levels?
 		public static string[] ShootingRangeTargets =
 		[
 			"Rail_targets/01_rail_target/Shooting_range_rails_02/Shooting_range_target_rails",
@@ -287,6 +286,9 @@ namespace SevenBoldPencil.TargetDummies
 			"Target_stand_changed (1)",
 			"Target_stand_changed (2)",
 			"Target_stand_changed (3)",
+			"Target_stand_changed (4)",
+			"metal_target (1)",
+			"metal_target (2)",
 		];
 
 		public void HideShootingRangeTargets(HideoutController __instance)
@@ -299,6 +301,12 @@ namespace SevenBoldPencil.TargetDummies
 			var areaLevel = shootingRange.CurrentLevel;
 			if (!areaLevel)
 			{
+				return;
+			}
+
+			if (areaLevel == shootingRange.AreaLevels[0])
+			{
+				// level 0, no shooting range
 				return;
 			}
 
