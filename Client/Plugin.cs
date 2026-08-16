@@ -37,20 +37,59 @@ using UnityEngine;
 
 namespace SevenBoldPencil.TargetDummies
 {
-	// TODO add all of them
 	// TODO mannequin with player equipment can be just "Mannequin" type
 	public enum MannequinType
 	{
 		Scav,
+		ScavSniper,
+		Raider,
+
+		BEAR,
+		USEC,
+
 		Reshala,
-		Killa,
+		ReshalaGuard,
+
+		Shturman,
+		ShturmanGuard,
+
 		Sanitar,
+		SanitarGuard,
+
 		Gluhar,
-		Partisan,
+		GluharGuardAssault,
+		GluharGuardSecurity,
+		GluharGuardScout,
+		GluharGuardSnipe,
+
+		Killa,
+		KillaLabyrinth,
+
+		Tagilla,
+		TagillaLabyrinth,
+
 		Rogue,
 		Knight,
 		BigPipe,
 		BirdEye,
+
+		CultistWarrior,
+		CultistPriest,
+
+		Zryachiy,
+		ZryachiyGuard,
+
+		Kaban,
+		KabanGuardBasmach,
+		KabanGuardGus,
+		KabanGuard,
+		KabanGuardSniper,
+
+		Kolontay,
+		KolontayGuardAssault,
+		KolontayGuardSecurity,
+
+		Partisan,
 	}
 
 	public readonly record struct MannequinData
@@ -179,21 +218,63 @@ namespace SevenBoldPencil.TargetDummies
 
 		public static CountTypeBotWave GetBotType(MannequinType mannequinType)
 		{
-			// TODO figure out correct bot difficulty
-			return mannequinType switch
+			var wildSpawnType = mannequinType switch
 			{
-				MannequinType.Scav => new(1, WildSpawnType.assault, BotDifficulty.normal),
-				MannequinType.Reshala => new(1, WildSpawnType.bossBully, BotDifficulty.normal),
-				MannequinType.Killa => new(1, WildSpawnType.bossKilla, BotDifficulty.normal),
-				MannequinType.Gluhar => new(1, WildSpawnType.bossGluhar, BotDifficulty.normal),
-				MannequinType.Sanitar => new(1, WildSpawnType.bossSanitar, BotDifficulty.normal),
-				MannequinType.Partisan => new(1, WildSpawnType.bossPartisan, BotDifficulty.normal),
-				MannequinType.Rogue => new(1, WildSpawnType.exUsec, BotDifficulty.normal),
-				MannequinType.Knight => new(1, WildSpawnType.bossKnight, BotDifficulty.normal),
-				MannequinType.BigPipe => new(1, WildSpawnType.followerBigPipe, BotDifficulty.normal),
-				MannequinType.BirdEye => new(1, WildSpawnType.followerBirdEye, BotDifficulty.normal),
+				MannequinType.Scav => WildSpawnType.assault,
+				MannequinType.ScavSniper => WildSpawnType.marksman,
+				MannequinType.Raider => WildSpawnType.pmcBot,
+
+				MannequinType.BEAR => WildSpawnType.pmcBEAR,
+				MannequinType.USEC => WildSpawnType.pmcUSEC,
+
+				MannequinType.Reshala => WildSpawnType.bossBully,
+				MannequinType.ReshalaGuard => WildSpawnType.followerBully,
+
+				MannequinType.Shturman => WildSpawnType.bossKojaniy,
+				MannequinType.ShturmanGuard => WildSpawnType.followerKojaniy,
+
+				MannequinType.Sanitar => WildSpawnType.bossSanitar,
+				MannequinType.SanitarGuard => WildSpawnType.followerSanitar,
+
+				MannequinType.Gluhar => WildSpawnType.bossGluhar,
+				MannequinType.GluharGuardAssault => WildSpawnType.followerGluharAssault,
+				MannequinType.GluharGuardSecurity => WildSpawnType.followerGluharSecurity,
+				MannequinType.GluharGuardScout => WildSpawnType.followerGluharScout,
+				MannequinType.GluharGuardSnipe => WildSpawnType.followerGluharSnipe,
+
+				MannequinType.Killa => WildSpawnType.bossKilla,
+				MannequinType.KillaLabyrinth => WildSpawnType.bossKillaAgro,
+
+				MannequinType.Tagilla => WildSpawnType.bossTagilla,
+				MannequinType.TagillaLabyrinth => WildSpawnType.bossTagillaAgro,
+
+				MannequinType.Rogue => WildSpawnType.exUsec,
+				MannequinType.Knight => WildSpawnType.bossKnight,
+				MannequinType.BigPipe => WildSpawnType.followerBigPipe,
+				MannequinType.BirdEye => WildSpawnType.followerBirdEye,
+
+				MannequinType.CultistWarrior => WildSpawnType.sectantWarrior,
+				MannequinType.CultistPriest => WildSpawnType.sectantPriest,
+
+				MannequinType.Zryachiy => WildSpawnType.bossZryachiy,
+				MannequinType.ZryachiyGuard => WildSpawnType.followerZryachiy,
+
+				MannequinType.Kaban => WildSpawnType.bossBoar,
+				MannequinType.KabanGuardBasmach => WildSpawnType.followerBoarClose1,
+				MannequinType.KabanGuardGus => WildSpawnType.followerBoarClose2,
+				MannequinType.KabanGuard => WildSpawnType.followerBoar,
+				MannequinType.KabanGuardSniper => WildSpawnType.bossBoarSniper,
+
+				MannequinType.Kolontay => WildSpawnType.bossKolontay,
+				MannequinType.KolontayGuardAssault => WildSpawnType.followerKolontayAssault,
+				MannequinType.KolontayGuardSecurity => WildSpawnType.followerKolontaySecurity,
+
+				MannequinType.Partisan => WildSpawnType.bossPartisan,
+
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
+
+			return new(1, wildSpawnType, BotDifficulty.normal);
 		}
 
 		// TODO this is true for level 3, what about other levels?
