@@ -92,7 +92,7 @@ namespace SevenBoldPencil.TargetDummies
 		ConfigEntry<MannequinType> Type
 	);
 
-    [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.1.0")]
+    [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance;
