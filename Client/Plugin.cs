@@ -14,10 +14,12 @@ using EFT;
 using EFT.AssetsManager;
 using EFT.InventoryLogic;
 using EFT.Hideout;
+using Newtonsoft.Json;
 using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -26,9 +28,12 @@ using UnityEngine;
 
 namespace SevenBoldPencil.TargetDummies
 {
-	// TODO mannequin with player equipment can be just "Mannequin" type
 	public enum MannequinType
 	{
+		Mannequin1,
+		Mannequin2,
+		Mannequin3,
+
 		Scav,
 		ScavSniper,
 		Raider,
@@ -101,6 +106,12 @@ namespace SevenBoldPencil.TargetDummies
 		public ConfigEntry<MannequinType> FarMiddleMannequinType;
 		public ConfigEntry<MannequinType> FarRightMannequinType;
 
+		public ConfigEntry<float> Mannequin_Health_Head;
+		public ConfigEntry<float> Mannequin_Health_Chest;
+		public ConfigEntry<float> Mannequin_Health_Stomach;
+		public ConfigEntry<float> Mannequin_Health_Arm;
+		public ConfigEntry<float> Mannequin_Health_Leg;
+
 		public Dictionary<LocalPlayer, MannequinData> Mannequins;
 
         private void Awake()
@@ -115,6 +126,12 @@ namespace SevenBoldPencil.TargetDummies
 			FarLeftMannequinType = Config.Bind<MannequinType>("Far", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			FarMiddleMannequinType = Config.Bind<MannequinType>("Far", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
 			FarRightMannequinType = Config.Bind<MannequinType>("Far", "Right Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
+
+			Mannequin_Health_Head = Config.Bind<float>("Mannequin Settings", "Health Head", 35, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 5 }));
+			Mannequin_Health_Chest = Config.Bind<float>("Mannequin Settings", "Health Chest", 85, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 4 }));
+			Mannequin_Health_Stomach = Config.Bind<float>("Mannequin Settings", "Health Stomach", 70, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
+			Mannequin_Health_Arm = Config.Bind<float>("Mannequin Settings", "Health Arm", 60, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
+			Mannequin_Health_Leg = Config.Bind<float>("Mannequin Settings", "Health Leg", 65, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
 
 			Mannequins = new();
 
@@ -139,13 +156,7 @@ namespace SevenBoldPencil.TargetDummies
 			var hideoutGameWorld = hideoutGame.GameWorld;
 			var localPlayerPosition = new Vector3(-2.5263f, 0f, 9.3481f);
 
-			var session = tarkovApplication.Session;
-			var profilesRequest = new List<CountTypeBotWave>()
-			{
-				GetBotType(data.Type.Value)
-			};
-			var profiles = await session.LoadBots(profilesRequest);
-			var botPlayerProfile = profiles[0];
+			var botPlayerProfile = await GenerateProfile(tarkovApplication.Session, hideoutGame.Profile, data.Type.Value);
 
 			await Singleton<ObjectsFactory>.Instance.LoadBundlesAndCreatePools
 			(
@@ -205,9 +216,150 @@ namespace SevenBoldPencil.TargetDummies
 			}
 		}
 
-		public static CountTypeBotWave GetBotType(MannequinType mannequinType)
+		public async Task<Profile> GenerateProfile(IEftSession session, Profile playerProfile, MannequinType mannequinType)
 		{
-			var wildSpawnType = mannequinType switch
+			if (mannequinType == MannequinType.Mannequin1)
+			{
+				return GenerateProfileWithMannequinEquipment(playerProfile, 0);
+			}
+			if (mannequinType == MannequinType.Mannequin2)
+			{
+				return GenerateProfileWithMannequinEquipment(playerProfile, 1);
+			}
+			if (mannequinType == MannequinType.Mannequin3)
+			{
+				return GenerateProfileWithMannequinEquipment(playerProfile, 2);
+			}
+
+			var botType = GetBotType(mannequinType);
+			return await GetBotProfile(session, botType);
+		}
+
+		public Profile GenerateProfileWithMannequinEquipment(Profile playerProfile, int mannequinIndex)
+		{
+			var profileDescriptor = GenerateMannequinProfile();
+
+			var mannequinItem = playerProfile.Inventory.HideoutAreaStashes[EAreaType.EquipmentPresetsStand].Slots[mannequinIndex].ContainedItem;
+			if (mannequinItem == null || mannequinItem is not CompoundItem mannequin)
+			{
+				return new(profileDescriptor);
+			}
+
+			// TODO use pants player assigned in mannequin customization option
+
+			// default mannequin pants don't have holster, so pistols will fly
+			// in the air somewhere near mannequin, so use pants from player
+
+			profileDescriptor.Customization[EBodyModelPart.Feet] = playerProfile.Customization[EBodyModelPart.Feet];
+
+			var profile = new Profile(profileDescriptor);
+			var profileSlots = profile.Inventory.Equipment.Slots;
+			var mannequinSlots = mannequin.Slots;
+
+			// clone all equipment items
+			for (var i = 0; i < mannequinSlots.Length; i++)
+			{
+				var originalItem = mannequinSlots[i].ContainedItem;
+				if (originalItem != null)
+				{
+					var clonedItem = originalItem.CloneItem();
+					profileSlots[i].ChangeContainedItemDirectly(clonedItem);
+				}
+			}
+
+			return profile;
+		}
+
+		public ProfileDescriptor GenerateMannequinProfile()
+		{
+			return new()
+			{
+				Id = MongoID.Generate(true),
+				Info = new(),
+				Customization = GenerateDefaultCustomization(),
+				Health = GenerateDefaultHealth(),
+				Inventory = GenerateDefaultInventory(),
+			};
+		}
+
+		public static Dictionary<EBodyModelPart, MongoID> GenerateDefaultCustomization()
+		{
+			return new()
+			{
+			    { EBodyModelPart.Head, "6644d2da35d958070c02642c" },
+			    { EBodyModelPart.Body, "6644d2ffd85107e63500a61c" },
+			    { EBodyModelPart.Feet, "6644d32235d958070c02642e" },
+			    { EBodyModelPart.Hands, "5cc2e68f14c02e28b47de290" },
+			    { EBodyModelPart.Voice, "5fc613c80b735e7b024c76e2" },
+			};
+		}
+
+		public Profile.HealthInfo GenerateDefaultHealth()
+		{
+			return new()
+			{
+				BodyParts = new()
+				{
+					{ EBodyPart.Head, NewBodyPartInfo(Mannequin_Health_Head.Value) },
+					{ EBodyPart.Chest, NewBodyPartInfo(Mannequin_Health_Chest.Value) },
+					{ EBodyPart.Stomach, NewBodyPartInfo(Mannequin_Health_Stomach.Value) },
+					{ EBodyPart.LeftArm, NewBodyPartInfo(Mannequin_Health_Arm.Value) },
+					{ EBodyPart.RightArm, NewBodyPartInfo(Mannequin_Health_Arm.Value) },
+					{ EBodyPart.LeftLeg, NewBodyPartInfo(Mannequin_Health_Leg.Value) },
+					{ EBodyPart.RightLeg, NewBodyPartInfo(Mannequin_Health_Leg.Value) },
+				},
+				Energy = NewHealthValueInfo(100),
+				Hydration = NewHealthValueInfo(100),
+				Temperature = NewHealthValueInfo(36.6f, 28, 40),
+				Poison = NewHealthValueInfo(0, 0, 100),
+			};
+		}
+
+		public static Profile.HealthInfo.BodyPartInfo NewBodyPartInfo(float maxHealthValue)
+		{
+			return new() { Health = NewHealthValueInfo(maxHealthValue) };
+		}
+
+		public static Profile.HealthInfo.ValueInfo NewHealthValueInfo(float maxValue)
+		{
+			return NewHealthValueInfo(maxValue, 0, maxValue);
+		}
+
+		public static Profile.HealthInfo.ValueInfo NewHealthValueInfo(float currentValue, float minValue, float maxValue)
+		{
+			return new()
+			{
+				Current = currentValue,
+				Minimum = minValue,
+				Maximum = maxValue,
+			};
+		}
+
+		public static InventoryDescriptor GenerateDefaultInventory()
+		{
+		    var equipment = MongoID.Generate(true);
+			return new()
+			{
+				_items =
+				[
+					new() { _id = equipment, _tpl = "55d7217a4bdc2d86028b456d" },
+				],
+				_equipmentId = equipment,
+			};
+		}
+
+		public async Task<Profile> GetBotProfile(IEftSession session, WildSpawnType botType)
+		{
+			var botProfileRequest = new CountTypeBotWave(1, botType, BotDifficulty.normal);
+			var profilesRequest = new List<CountTypeBotWave>(1) { botProfileRequest };
+			var profiles = await session.LoadBots(profilesRequest);
+			var botPlayerProfile = profiles[0];
+			return botPlayerProfile;
+		}
+
+		public static WildSpawnType GetBotType(MannequinType mannequinType)
+		{
+			return mannequinType switch
 			{
 				MannequinType.Scav => WildSpawnType.assault,
 				MannequinType.ScavSniper => WildSpawnType.marksman,
@@ -262,8 +414,6 @@ namespace SevenBoldPencil.TargetDummies
 
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
-
-			return new(1, wildSpawnType, BotDifficulty.normal);
 		}
 
 		public static string[] ShootingRangeTargets =
