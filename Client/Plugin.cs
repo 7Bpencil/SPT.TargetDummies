@@ -239,7 +239,12 @@ namespace SevenBoldPencil.TargetDummies
 		{
 			var profileDescriptor = GenerateMannequinProfile();
 
-			var mannequinItem = playerProfile.Inventory.HideoutAreaStashes[EAreaType.EquipmentPresetsStand].Slots[mannequinIndex].ContainedItem;
+			if (!playerProfile.Inventory.HideoutAreaStashes.TryGetValue(EAreaType.EquipmentPresetsStand, out var equipmentPresetsStand))
+			{
+				return new(profileDescriptor);
+			}
+
+			var mannequinItem = equipmentPresetsStand.Slots[mannequinIndex].ContainedItem;
 			if (mannequinItem == null || mannequinItem is not CompoundItem mannequin)
 			{
 				return new(profileDescriptor);
