@@ -116,34 +116,8 @@ namespace SevenBoldPencil.TargetDummies
     public class Plugin : BaseUnityPlugin
     {
 		public const string BlackDivisionGUID = "com.blackdiv.tacticaltoaster";
-		public static readonly MannequinType[] BlackDivision =
-		[
-			MannequinType.BlackDivisionAssault,
-			MannequinType.BlackDivisionWedge,
-			MannequinType.BlackDivisionIcebreakerRaider,
-		];
-		public static bool HasBlackDivision;
-
 		public const string RuafGUID = "com.ruafcomehome.tacticaltoaster";
-		public static readonly MannequinType[] Ruaf =
-		[
-	        MannequinType.RuafRifleman,
-	        MannequinType.RuafSeniorRifleman,
-	        MannequinType.RuafAutorifleman,
-	        MannequinType.RuafMarksman,
-	        MannequinType.RuafMachinegunner,
-	        MannequinType.RemnantRifleman,
-		];
-		public static bool HasRuaf;
-
 		public const string UntarGUID = "com.untargh.tacticaltoaster";
-		public static readonly MannequinType[] Untar =
-		[
-	        MannequinType.UntarRifleman,
-	        MannequinType.UntarSquadLeader,
-	        MannequinType.UntarOfficer,
-		];
-		public static bool HasUntar;
 
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
@@ -162,16 +136,13 @@ namespace SevenBoldPencil.TargetDummies
 		public ConfigEntry<float> Mannequin_Health_Arm;
 		public ConfigEntry<float> Mannequin_Health_Leg;
 
+		public HashSet<MannequinType> MissingTypes;
 		public Dictionary<LocalPlayer, MannequinData> Mannequins;
 
         private void Awake()
         {
             Instance = this;
 			LoggerInstance = Logger;
-
-			HasBlackDivision = Chainloader.PluginInfos.ContainsKey(BlackDivisionGUID);
-			HasRuaf = Chainloader.PluginInfos.ContainsKey(RuafGUID);
-			HasUntar = Chainloader.PluginInfos.ContainsKey(UntarGUID);
 
 			CloseLeftMannequinType = Config.Bind<MannequinType>("Close", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			CloseMiddleMannequinType = Config.Bind<MannequinType>("Close", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
@@ -186,6 +157,30 @@ namespace SevenBoldPencil.TargetDummies
 			Mannequin_Health_Stomach = Config.Bind<float>("Mannequin Settings", "Health Stomach", 70, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			Mannequin_Health_Arm = Config.Bind<float>("Mannequin Settings", "Health Arm", 60, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
 			Mannequin_Health_Leg = Config.Bind<float>("Mannequin Settings", "Health Leg", 65, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
+
+			MissingTypes = new();
+
+			if (!Chainloader.PluginInfos.ContainsKey(BlackDivisionGUID))
+			{
+				MissingTypes.Add(MannequinType.BlackDivisionAssault);
+				MissingTypes.Add(MannequinType.BlackDivisionWedge);
+				MissingTypes.Add(MannequinType.BlackDivisionIcebreakerRaider);
+			}
+			if (!Chainloader.PluginInfos.ContainsKey(RuafGUID))
+			{
+		        MissingTypes.Add(MannequinType.RuafRifleman);
+		        MissingTypes.Add(MannequinType.RuafSeniorRifleman);
+		        MissingTypes.Add(MannequinType.RuafAutorifleman);
+		        MissingTypes.Add(MannequinType.RuafMarksman);
+		        MissingTypes.Add(MannequinType.RuafMachinegunner);
+		        MissingTypes.Add(MannequinType.RemnantRifleman);
+			}
+			if (!Chainloader.PluginInfos.ContainsKey(UntarGUID))
+			{
+		        MissingTypes.Add(MannequinType.UntarRifleman);
+		        MissingTypes.Add(MannequinType.UntarSquadLeader);
+		        MissingTypes.Add(MannequinType.UntarOfficer);
+			}
 
 			Mannequins = new();
 
@@ -284,31 +279,13 @@ namespace SevenBoldPencil.TargetDummies
 			{
 				return GenerateProfileWithMannequinEquipment(playerProfile, 2);
 			}
-			if (NotSupported(HasBlackDivision, BlackDivision, mannequinType))
-			{
-				return new(GenerateMannequinProfile());
-			}
-			if (NotSupported(HasRuaf, Ruaf, mannequinType))
-			{
-				return new(GenerateMannequinProfile());
-			}
-			if (NotSupported(HasUntar, Untar, mannequinType))
+			if (MissingTypes.Contains(mannequinType))
 			{
 				return new(GenerateMannequinProfile());
 			}
 
 			var botType = GetBotType(mannequinType);
 			return await GetBotProfile(session, botType);
-		}
-
-		public static bool NotSupported(bool hasMod, MannequinType[] modMannequins, MannequinType mannequinType)
-		{
-			if (hasMod)
-			{
-				return false;
-			}
-
-			return Array.IndexOf(modMannequins, mannequinType) != -1;
 		}
 
 		public Profile GenerateProfileWithMannequinEquipment(Profile playerProfile, int mannequinIndex)
