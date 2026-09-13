@@ -117,4 +117,18 @@ namespace SevenBoldPencil.TargetDummies
 			return false;
 		}
 	}
+
+	public class Patch_TarkovApplication_HideoutController_UnloadHideout : ModulePatch
+	{
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(TarkovApplication.HideoutController), nameof(TarkovApplication.HideoutController.UnloadHideout));
+        }
+
+        [PatchPrefix]
+        public static void Prefix()
+		{
+			Plugin.Instance.ClearBots();
+		}
+	}
 }

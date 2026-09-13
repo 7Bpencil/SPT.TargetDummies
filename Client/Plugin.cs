@@ -196,6 +196,7 @@ namespace SevenBoldPencil.TargetDummies
 			new Patch_GameWorld_DestroyAllLoot().Enable();
 			new Patch_CorpseRagdoll_Start().Enable();
 			new Patch_HideoutAreaTrigger_OnTriggerExit().Enable();
+			new Patch_TarkovApplication_HideoutController_UnloadHideout().Enable();
         }
 
 		public async Task SpawnBot(MannequinData data)
@@ -663,6 +664,16 @@ namespace SevenBoldPencil.TargetDummies
 			yield return new WaitForSeconds(0.5f);
 
 			SpawnBot(mannequinData);
+		}
+
+		public void ClearBots()
+		{
+			foreach (var mannequin in Mannequins.Keys)
+			{
+				mannequin.Dispose();
+				AssetPoolObject.ReturnToPool(mannequin.gameObject, true);
+			}
+			Mannequins.Clear();
 		}
     }
 
