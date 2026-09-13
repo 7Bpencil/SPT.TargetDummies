@@ -112,7 +112,7 @@ namespace SevenBoldPencil.TargetDummies
 		ConfigEntry<MannequinType> Type
 	);
 
-    [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.1")]
+    [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.3.0")]
 	[BepInDependency("com.morebotsapi.tacticaltoaster", BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(BlackDivisionGUID, BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(RuafGUID, BepInDependency.DependencyFlags.SoftDependency)]
