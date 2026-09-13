@@ -92,6 +92,14 @@ namespace SevenBoldPencil.TargetDummies
 		BlackDivisionSupport,
 		BlackDivisionWedge,
 		BlackDivisionRaider,
+
+        RuafRifleman,
+        RuafSeniorRifleman,
+        RuafAutorifleman,
+        RuafGrenadier,
+        RuafMarksman,
+        RuafMachinegunner,
+        RemnantRifleman,
 	}
 
 	public readonly record struct MannequinData
@@ -102,6 +110,7 @@ namespace SevenBoldPencil.TargetDummies
 
     [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.1")]
 	[BepInDependency(BlackDivisionGUID, BepInDependency.DependencyFlags.SoftDependency)]
+	[BepInDependency(RuafGUID, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
 		public const string BlackDivisionGUID = "com.blackdiv.tacticaltoaster";
@@ -115,6 +124,19 @@ namespace SevenBoldPencil.TargetDummies
 			MannequinType.BlackDivisionRaider,
 		];
 		public static bool HasBlackDivision;
+
+		public const string RuafGUID = "com.ruafcomehome.tacticaltoaster";
+		public static readonly MannequinType[] Ruaf =
+		[
+	        MannequinType.RuafRifleman,
+	        MannequinType.RuafSeniorRifleman,
+	        MannequinType.RuafAutorifleman,
+	        MannequinType.RuafGrenadier,
+	        MannequinType.RuafMarksman,
+	        MannequinType.RuafMachinegunner,
+	        MannequinType.RemnantRifleman,
+		];
+		public static bool HasRuaf;
 
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
@@ -141,6 +163,7 @@ namespace SevenBoldPencil.TargetDummies
 			LoggerInstance = Logger;
 
 			HasBlackDivision = Chainloader.PluginInfos.ContainsKey(BlackDivisionGUID);
+			HasRuaf = Chainloader.PluginInfos.ContainsKey(RuafGUID);
 
 			CloseLeftMannequinType = Config.Bind<MannequinType>("Close", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			CloseMiddleMannequinType = Config.Bind<MannequinType>("Close", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
@@ -254,6 +277,10 @@ namespace SevenBoldPencil.TargetDummies
 				return GenerateProfileWithMannequinEquipment(playerProfile, 2);
 			}
 			if (NotSupported(HasBlackDivision, BlackDivision, mannequinType))
+			{
+				return new(GenerateMannequinProfile());
+			}
+			if (NotSupported(HasRuaf, Ruaf, mannequinType))
 			{
 				return new(GenerateMannequinProfile());
 			}
@@ -460,6 +487,14 @@ namespace SevenBoldPencil.TargetDummies
 				MannequinType.BlackDivisionSupport => (WildSpawnType)848423,
 				MannequinType.BlackDivisionWedge => (WildSpawnType)848424,
 				MannequinType.BlackDivisionRaider => (WildSpawnType)848426,
+
+		        MannequinType.RuafRifleman => (WildSpawnType)848400,
+		        MannequinType.RuafSeniorRifleman => (WildSpawnType)848401,
+		        MannequinType.RuafAutorifleman => (WildSpawnType)848402,
+		        MannequinType.RuafGrenadier => (WildSpawnType)848403,
+		        MannequinType.RuafMarksman => (WildSpawnType)848404,
+		        MannequinType.RuafMachinegunner => (WildSpawnType)848405,
+		        MannequinType.RemnantRifleman => (WildSpawnType)848406,
 
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
