@@ -158,7 +158,7 @@ namespace SevenBoldPencil.TargetDummies
 			FarMiddleMannequinType = Config.Bind<MannequinType>("Far", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
 			FarRightMannequinType = Config.Bind<MannequinType>("Far", "Right Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
 
-			CustomType1 = Config.Bind<WildSpawnType>("Custom Mannequin Types", "Custom1", WildSpawnType.assault, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
+			CustomType1 = Config.Bind<WildSpawnType>("Custom Mannequin Types", "Custom1", WildSpawnType.infectedLaborant, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
 
 			Mannequin_Health_Head = Config.Bind<float>("Mannequin Settings", "Health Head", 35, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 5 }));
 			Mannequin_Health_Chest = Config.Bind<float>("Mannequin Settings", "Health Chest", 85, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 4 }));
