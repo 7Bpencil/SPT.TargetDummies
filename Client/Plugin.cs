@@ -6,6 +6,7 @@
 //
 
 using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using Comfort.Common;
@@ -84,6 +85,13 @@ namespace SevenBoldPencil.TargetDummies
 		KolontayGuardSecurity,
 
 		Partisan,
+
+		BlackDivisionLead,
+		BlackDivisionAssault,
+		BlackDivisionBreacher,
+		BlackDivisionSupport,
+		BlackDivisionWedge,
+		BlackDivisionRaider,
 	}
 
 	public readonly record struct MannequinData
@@ -93,8 +101,21 @@ namespace SevenBoldPencil.TargetDummies
 	);
 
     [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.1")]
+	[BepInDependency(BlackDivisionGUID, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
+		public const string BlackDivisionGUID = "com.blackdiv.tacticaltoaster";
+		public static readonly MannequinType[] BlackDivision =
+		[
+			MannequinType.BlackDivisionLead,
+			MannequinType.BlackDivisionAssault,
+			MannequinType.BlackDivisionBreacher,
+			MannequinType.BlackDivisionSupport,
+			MannequinType.BlackDivisionWedge,
+			MannequinType.BlackDivisionRaider,
+		];
+		public static bool HasBlackDivision;
+
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
 
@@ -118,6 +139,8 @@ namespace SevenBoldPencil.TargetDummies
         {
             Instance = this;
 			LoggerInstance = Logger;
+
+			HasBlackDivision = Chainloader.PluginInfos.ContainsKey(BlackDivisionGUID);
 
 			CloseLeftMannequinType = Config.Bind<MannequinType>("Close", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			CloseMiddleMannequinType = Config.Bind<MannequinType>("Close", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
@@ -230,9 +253,23 @@ namespace SevenBoldPencil.TargetDummies
 			{
 				return GenerateProfileWithMannequinEquipment(playerProfile, 2);
 			}
+			if (NotSupported(HasBlackDivision, BlackDivision, mannequinType))
+			{
+				return new(GenerateMannequinProfile());
+			}
 
 			var botType = GetBotType(mannequinType);
 			return await GetBotProfile(session, botType);
+		}
+
+		public static bool NotSupported(bool hasMod, MannequinType[] modMannequins, MannequinType mannequinType)
+		{
+			if (hasMod)
+			{
+				return false;
+			}
+
+			return Array.IndexOf(modMannequins, mannequinType) != -1;
 		}
 
 		public Profile GenerateProfileWithMannequinEquipment(Profile playerProfile, int mannequinIndex)
@@ -416,6 +453,13 @@ namespace SevenBoldPencil.TargetDummies
 				MannequinType.KolontayGuardSecurity => WildSpawnType.followerKolontaySecurity,
 
 				MannequinType.Partisan => WildSpawnType.bossPartisan,
+
+				MannequinType.BlackDivisionLead => (WildSpawnType)848420,
+				MannequinType.BlackDivisionAssault => (WildSpawnType)848421,
+				MannequinType.BlackDivisionBreacher => (WildSpawnType)848422,
+				MannequinType.BlackDivisionSupport => (WildSpawnType)848423,
+				MannequinType.BlackDivisionWedge => (WildSpawnType)848424,
+				MannequinType.BlackDivisionRaider => (WildSpawnType)848426,
 
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
