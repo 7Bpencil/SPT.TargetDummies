@@ -114,6 +114,7 @@ namespace SevenBoldPencil.TargetDummies
 	);
 
     [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.1")]
+	[BepInDependency("com.morebotsapi.tacticaltoaster", BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(BlackDivisionGUID, BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(RuafGUID, BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(UntarGUID, BepInDependency.DependencyFlags.SoftDependency)]
