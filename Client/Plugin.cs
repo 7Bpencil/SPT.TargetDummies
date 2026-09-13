@@ -35,6 +35,8 @@ namespace SevenBoldPencil.TargetDummies
 		Mannequin2,
 		Mannequin3,
 
+		Custom1,
+
 		Scav,
 		ScavSniper,
 		Raider,
@@ -130,6 +132,8 @@ namespace SevenBoldPencil.TargetDummies
 		public ConfigEntry<MannequinType> FarMiddleMannequinType;
 		public ConfigEntry<MannequinType> FarRightMannequinType;
 
+		public ConfigEntry<WildSpawnType> CustomType1;
+
 		public ConfigEntry<float> Mannequin_Health_Head;
 		public ConfigEntry<float> Mannequin_Health_Chest;
 		public ConfigEntry<float> Mannequin_Health_Stomach;
@@ -151,6 +155,8 @@ namespace SevenBoldPencil.TargetDummies
 			FarLeftMannequinType = Config.Bind<MannequinType>("Far", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			FarMiddleMannequinType = Config.Bind<MannequinType>("Far", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
 			FarRightMannequinType = Config.Bind<MannequinType>("Far", "Right Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
+
+			CustomType1 = Config.Bind<WildSpawnType>("Custom Mannequin Types", "Custom1", WildSpawnType.assault, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 1 }));
 
 			Mannequin_Health_Head = Config.Bind<float>("Mannequin Settings", "Health Head", 35, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 5 }));
 			Mannequin_Health_Chest = Config.Bind<float>("Mannequin Settings", "Health Chest", 85, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 4 }));
@@ -283,9 +289,15 @@ namespace SevenBoldPencil.TargetDummies
 			{
 				return new(GenerateMannequinProfile());
 			}
-
-			var botType = GetBotType(mannequinType);
-			return await GetBotProfile(session, botType);
+			if (mannequinType == MannequinType.Custom1)
+			{
+				var botType = CustomType1.Value;
+				return await GetBotProfile(session, botType);
+			}
+			{
+				var botType = GetBotType(mannequinType);
+				return await GetBotProfile(session, botType);
+			}
 		}
 
 		public Profile GenerateProfileWithMannequinEquipment(Profile playerProfile, int mannequinIndex)
