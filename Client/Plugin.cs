@@ -31,6 +31,8 @@ namespace SevenBoldPencil.TargetDummies
 {
 	public enum MannequinType
 	{
+		Player,
+
 		Mannequin1,
 		Mannequin2,
 		Mannequin3,
@@ -273,6 +275,10 @@ namespace SevenBoldPencil.TargetDummies
 
 		public async Task<Profile> GenerateProfile(IEftSession session, Profile playerProfile, MannequinType mannequinType)
 		{
+			if (mannequinType == MannequinType.Player)
+			{
+				return GenerateProfileWithPlayerEquipmentAndStats(playerProfile);
+			}
 			if (mannequinType == MannequinType.Mannequin1)
 			{
 				return GenerateProfileWithMannequinEquipment(playerProfile, 0);
@@ -300,6 +306,36 @@ namespace SevenBoldPencil.TargetDummies
 			}
 		}
 
+		public Profile GenerateProfileWithPlayerEquipmentAndStats(Profile playerProfile)
+		{
+			var profileDescriptor = new ProfileDescriptor()
+			{
+				Id = MongoID.Generate(true),
+				Info = new(),
+				Customization = CloneCustomization(playerProfile),
+				Health = CloneHealth(playerProfile),
+				Inventory = GenerateDefaultInventory(),
+			};
+
+			var profile = new Profile(profileDescriptor);
+			CloneEquipment(profile.Inventory.Equipment.Slots, playerProfile.Inventory.Equipment.Slots);
+
+			return profile;
+		}
+
+		public void CloneEquipment(Slot[] targetSlots, Slot[] sourceSlots)
+		{
+			for (var i = 0; i < targetSlots.Length && i < sourceSlots.Length; i++)
+			{
+				var originalItem = sourceSlots[i].ContainedItem;
+				if (originalItem != null)
+				{
+					var clonedItem = originalItem.CloneItem();
+					targetSlots[i].ChangeContainedItemDirectly(clonedItem);
+				}
+			}
+		}
+
 		public Profile GenerateProfileWithMannequinEquipment(Profile playerProfile, int mannequinIndex)
 		{
 			var profileDescriptor = GenerateMannequinProfile();
@@ -323,19 +359,7 @@ namespace SevenBoldPencil.TargetDummies
 			profileDescriptor.Customization[EBodyModelPart.Feet] = playerProfile.Customization[EBodyModelPart.Feet];
 
 			var profile = new Profile(profileDescriptor);
-			var profileSlots = profile.Inventory.Equipment.Slots;
-			var mannequinSlots = mannequin.Slots;
-
-			// clone all equipment items
-			for (var i = 0; i < mannequinSlots.Length; i++)
-			{
-				var originalItem = mannequinSlots[i].ContainedItem;
-				if (originalItem != null)
-				{
-					var clonedItem = originalItem.CloneItem();
-					profileSlots[i].ChangeContainedItemDirectly(clonedItem);
-				}
-			}
+			CloneEquipment(profile.Inventory.Equipment.Slots, mannequin.Slots);
 
 			return profile;
 		}
@@ -352,6 +376,22 @@ namespace SevenBoldPencil.TargetDummies
 			};
 		}
 
+		public static Dictionary<EBodyModelPart, MongoID> CloneCustomization(Profile profile)
+		{
+			// probably no need to clone profile.Customization,
+			// we could just return it itself, but lets be safe
+
+			var source = profile.Customization;
+			return new()
+			{
+			    { EBodyModelPart.Head, source[EBodyModelPart.Head] },
+			    { EBodyModelPart.Body, source[EBodyModelPart.Body] },
+			    { EBodyModelPart.Feet, source[EBodyModelPart.Feet] },
+			    { EBodyModelPart.Hands, source[EBodyModelPart.Hands] },
+			    { EBodyModelPart.Voice, source[EBodyModelPart.Voice] },
+			};
+		}
+
 		public static Dictionary<EBodyModelPart, MongoID> GenerateDefaultCustomization()
 		{
 			return new()
@@ -361,6 +401,32 @@ namespace SevenBoldPencil.TargetDummies
 			    { EBodyModelPart.Feet, "6644d32235d958070c02642e" },
 			    { EBodyModelPart.Hands, "5cc2e68f14c02e28b47de290" },
 			    { EBodyModelPart.Voice, "5fc613c80b735e7b024c76e2" },
+			};
+		}
+
+		public Profile.HealthInfo CloneHealth(Profile profile)
+		{
+			// some people run with custom health, this is for them
+
+			var source = profile.Health;
+			var sourceBodyParts = source.BodyParts;
+
+			return new()
+			{
+				BodyParts = new()
+				{
+					{ EBodyPart.Head, NewBodyPartInfo(sourceBodyParts[EBodyPart.Head]) },
+					{ EBodyPart.Chest, NewBodyPartInfo(sourceBodyParts[EBodyPart.Chest]) },
+					{ EBodyPart.Stomach, NewBodyPartInfo(sourceBodyParts[EBodyPart.Stomach]) },
+					{ EBodyPart.LeftArm, NewBodyPartInfo(sourceBodyParts[EBodyPart.LeftArm]) },
+					{ EBodyPart.RightArm, NewBodyPartInfo(sourceBodyParts[EBodyPart.RightArm]) },
+					{ EBodyPart.LeftLeg, NewBodyPartInfo(sourceBodyParts[EBodyPart.LeftLeg]) },
+					{ EBodyPart.RightLeg, NewBodyPartInfo(sourceBodyParts[EBodyPart.RightLeg]) },
+				},
+				Energy = NewHealthValueInfo(source.Energy.Maximum),
+				Hydration = NewHealthValueInfo(source.Hydration.Maximum),
+				Temperature = NewHealthValueInfo(36.6f, 28, 40),
+				Poison = NewHealthValueInfo(0, 0, 100),
 			};
 		}
 
@@ -383,6 +449,11 @@ namespace SevenBoldPencil.TargetDummies
 				Temperature = NewHealthValueInfo(36.6f, 28, 40),
 				Poison = NewHealthValueInfo(0, 0, 100),
 			};
+		}
+
+		public static Profile.HealthInfo.BodyPartInfo NewBodyPartInfo(Profile.HealthInfo.BodyPartInfo source)
+		{
+			return new() { Health = NewHealthValueInfo(source.Health.Maximum) };
 		}
 
 		public static Profile.HealthInfo.BodyPartInfo NewBodyPartInfo(float maxHealthValue)
