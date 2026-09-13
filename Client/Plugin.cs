@@ -100,7 +100,6 @@ namespace SevenBoldPencil.TargetDummies
 
         UntarRifleman,
         UntarSquadLeader,
-        UntarMarksman,
         UntarOfficer,
 	}
 
@@ -144,7 +143,6 @@ namespace SevenBoldPencil.TargetDummies
 		[
 	        MannequinType.UntarRifleman,
 	        MannequinType.UntarSquadLeader,
-	        MannequinType.UntarMarksman,
 	        MannequinType.UntarOfficer,
 		];
 		public static bool HasUntar;
@@ -511,7 +509,6 @@ namespace SevenBoldPencil.TargetDummies
 
 		        MannequinType.UntarRifleman => (WildSpawnType)1170,
 		        MannequinType.UntarSquadLeader => (WildSpawnType)1171,
-		        MannequinType.UntarMarksman => (WildSpawnType)1172,
 		        MannequinType.UntarOfficer => (WildSpawnType)1173,
 
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
