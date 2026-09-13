@@ -495,8 +495,13 @@ namespace SevenBoldPencil.TargetDummies
 			var botProfileRequest = new CountTypeBotWave(1, botType, BotDifficulty.normal);
 			var profilesRequest = new List<CountTypeBotWave>(1) { botProfileRequest };
 			var profiles = await session.LoadBots(profilesRequest);
-			var botPlayerProfile = profiles[0];
-			return botPlayerProfile;
+			if (profiles.Length > 0)
+			{
+				return profiles[0];
+			}
+
+			// happens when user selects broken bot type for Custom type
+			return new(GenerateMannequinProfile());
 		}
 
 		public static WildSpawnType GetBotType(MannequinType mannequinType)
