@@ -100,6 +100,11 @@ namespace SevenBoldPencil.TargetDummies
         RuafMarksman,
         RuafMachinegunner,
         RemnantRifleman,
+
+        UntarRifleman,
+        UntarSquadLeader,
+        UntarMarksman,
+        UntarOfficer,
 	}
 
 	public readonly record struct MannequinData
@@ -111,6 +116,7 @@ namespace SevenBoldPencil.TargetDummies
     [BepInPlugin("7Bpencil.TargetDummies", "7Bpencil.TargetDummies", "0.2.1")]
 	[BepInDependency(BlackDivisionGUID, BepInDependency.DependencyFlags.SoftDependency)]
 	[BepInDependency(RuafGUID, BepInDependency.DependencyFlags.SoftDependency)]
+	[BepInDependency(UntarGUID, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
 		public const string BlackDivisionGUID = "com.blackdiv.tacticaltoaster";
@@ -138,6 +144,16 @@ namespace SevenBoldPencil.TargetDummies
 		];
 		public static bool HasRuaf;
 
+		public const string UntarGUID = "com.untargh.tacticaltoaster";
+		public static readonly MannequinType[] Untar =
+		[
+	        MannequinType.UntarRifleman,
+	        MannequinType.UntarSquadLeader,
+	        MannequinType.UntarMarksman,
+	        MannequinType.UntarOfficer,
+		];
+		public static bool HasUntar;
+
         public static Plugin Instance;
 		public ManualLogSource LoggerInstance;
 
@@ -164,6 +180,7 @@ namespace SevenBoldPencil.TargetDummies
 
 			HasBlackDivision = Chainloader.PluginInfos.ContainsKey(BlackDivisionGUID);
 			HasRuaf = Chainloader.PluginInfos.ContainsKey(RuafGUID);
+			HasUntar = Chainloader.PluginInfos.ContainsKey(UntarGUID);
 
 			CloseLeftMannequinType = Config.Bind<MannequinType>("Close", "Left Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 3 }));
 			CloseMiddleMannequinType = Config.Bind<MannequinType>("Close", "Middle Mannequin Type", MannequinType.Scav, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 2 }));
@@ -281,6 +298,10 @@ namespace SevenBoldPencil.TargetDummies
 				return new(GenerateMannequinProfile());
 			}
 			if (NotSupported(HasRuaf, Ruaf, mannequinType))
+			{
+				return new(GenerateMannequinProfile());
+			}
+			if (NotSupported(HasUntar, Untar, mannequinType))
 			{
 				return new(GenerateMannequinProfile());
 			}
@@ -495,6 +516,11 @@ namespace SevenBoldPencil.TargetDummies
 		        MannequinType.RuafMarksman => (WildSpawnType)848404,
 		        MannequinType.RuafMachinegunner => (WildSpawnType)848405,
 		        MannequinType.RemnantRifleman => (WildSpawnType)848406,
+
+		        MannequinType.UntarRifleman => (WildSpawnType)1170,
+		        MannequinType.UntarSquadLeader => (WildSpawnType)1171,
+		        MannequinType.UntarMarksman => (WildSpawnType)1172,
+		        MannequinType.UntarOfficer => (WildSpawnType)1173,
 
 				_ => throw new ArgumentException($"Unknown mannequin type: {mannequinType}"),
 			};
