@@ -86,12 +86,9 @@ namespace SevenBoldPencil.TargetDummies
 
 		Partisan,
 
-		BlackDivisionLead,
 		BlackDivisionAssault,
-		BlackDivisionBreacher,
-		BlackDivisionSupport,
 		BlackDivisionWedge,
-		BlackDivisionRaider,
+		BlackDivisionIcebreakerRaider,
 
         RuafRifleman,
         RuafSeniorRifleman,
@@ -123,12 +120,9 @@ namespace SevenBoldPencil.TargetDummies
 		public const string BlackDivisionGUID = "com.blackdiv.tacticaltoaster";
 		public static readonly MannequinType[] BlackDivision =
 		[
-			MannequinType.BlackDivisionLead,
 			MannequinType.BlackDivisionAssault,
-			MannequinType.BlackDivisionBreacher,
-			MannequinType.BlackDivisionSupport,
 			MannequinType.BlackDivisionWedge,
-			MannequinType.BlackDivisionRaider,
+			MannequinType.BlackDivisionIcebreakerRaider,
 		];
 		public static bool HasBlackDivision;
 
@@ -503,12 +497,9 @@ namespace SevenBoldPencil.TargetDummies
 
 				MannequinType.Partisan => WildSpawnType.bossPartisan,
 
-				MannequinType.BlackDivisionLead => (WildSpawnType)848420,
 				MannequinType.BlackDivisionAssault => (WildSpawnType)848421,
-				MannequinType.BlackDivisionBreacher => (WildSpawnType)848422,
-				MannequinType.BlackDivisionSupport => (WildSpawnType)848423,
 				MannequinType.BlackDivisionWedge => (WildSpawnType)848424,
-				MannequinType.BlackDivisionRaider => (WildSpawnType)848426,
+				MannequinType.BlackDivisionIcebreakerRaider => (WildSpawnType)848426,
 
 		        MannequinType.RuafRifleman => (WildSpawnType)848400,
 		        MannequinType.RuafSeniorRifleman => (WildSpawnType)848401,
